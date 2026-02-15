@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAC Communication Helper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #F5F7FA 0%, #E8EAF6 100%);
+            min-height: 100vh;
+            padding: 25px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #5E6C84;
+            font-size: 2.5rem;
+            margin-bottom: 35px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .settings-icon {
+            position: absolute;
+            top: 0;
+            right: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.6);
+            border: 2px solid #E0E0E0;
+        }
+
+        .settings-icon:hover {
+            background: rgba(255,255,255,0.9);
+            transform: rotate(45deg);
+        }
+
+        .settings-icon:active {
+            transform: rotate(45deg) scale(0.95);
+        }
+
+        .categories {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .category-btn {
+            padding: 18px 35px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            min-width: 160px;
+            opacity: 0.7;
+        }
+
+        .category-btn:active {
+            transform: scale(0.96);
+        }
+
+        .category-btn.active {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            opacity: 1;
+        }
+
+        .cat-needs {
+            background: linear-gradient(135deg, #FFE0B2, #FFCCBC);
+            color: #5D4037;
+        }
+
+        .cat-feelings {
+            background: linear-gradient(135deg, #BBDEFB, #C5CAE9);
+            color: #283593;
+        }
+
+        .cat-activities {
+            background: linear-gradient(135deg, #E1BEE7, #D1C4E9);
+            color: #4A148C;
+        }
+
+        .cat-social {
+            background: linear-gradient(135deg, #C8E6C9, #DCEDC8);
+            color: #1B5E20;
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .comm-button {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+            border: 3px solid #E0E0E0;
+            border-radius: 25px;
+            padding: 30px 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            min-height: 160px;
+            min-width: 160px;
+        }
+
+        .comm-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            border-color: #B0BEC5;
+        }
+
+        .comm-button:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .comm-button.speaking {
+            animation: gentle-pulse 0.6s ease-in-out;
+            border-color: #81C784;
+            background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%);
+            box-shadow: 0 0 20px rgba(129, 199, 132, 0.3);
+        }
+
+        @keyframes gentle-pulse {
+            0%, 100% { 
+                transform: scale(1); 
+            }
+            50% { 
+                transform: scale(1.03);
+            }
+        }
+
+        .icon {
+            font-size: 4rem;
+            line-height: 1;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+        }
+
+        .label {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #37474F;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .message-bar {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F5F7FA 100%);
+            padding: 25px 30px;
+            border-radius: 20px;
+            margin-top: 40px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            border: 2px solid #E8EAF6;
+        }
+
+        .message-text {
+            font-size: 1.6rem;
+            color: #5E6C84;
+            font-weight: 600;
+            flex-grow: 1;
+            line-height: 1.4;
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #FFCDD2, #EF9A9A);
+            color: #C62828;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .clear-btn:hover {
+            background: linear-gradient(135deg, #EF9A9A, #E57373);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .clear-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Settings Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal h2 {
+            color: #5E6C84;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .modal h3 {
+            color: #37474F;
+            font-size: 1.4rem;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E8EAF6;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+        }
+
+        .setting-label {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #37474F;
+            margin-bottom: 10px;
+        }
+
+        .setting-control {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            background: #F8F9FA;
+            transition: all 0.3s ease;
+        }
+
+        .setting-control:focus {
+            outline: none;
+            border-color: #81C784;
+            background: white;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: linear-gradient(to right, #BBDEFB, #64B5F6);
+            border-radius: 10px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #2196F3;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: #2196F3;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: none;
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: 600;
+            color: #2196F3;
+            min-width: 40px;
+        }
+
+        .add-button-form {
+            background: #F5F7FA;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 15px;
+            background: linear-gradient(135deg, #BBDEFB, #C5CAE9);
+            color: #283593;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: linear-gradient(135deg, #90CAF9, #9FA8DA);
+        }
+
+        .file-input-label:active {
+            transform: scale(0.98);
+        }
+
+        input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin: 10px auto;
+            display: none;
+            border: 3px solid #E0E0E0;
+        }
+
+        .image-preview.show {
+            display: block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #81C784, #AED581);
+            color: #1B5E20;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #66BB6A, #9CCC65);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #E0E0E0, #BDBDBD);
+            color: #424242;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #BDBDBD, #9E9E9E);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .custom-buttons-list {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .custom-button-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #E8EAF6;
+        }
+
+        .custom-button-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .custom-button-item-info {
+            flex-grow: 1;
+        }
+
+        .custom-button-item-label {
+            font-weight: 600;
+            color: #37474F;
+        }
+
+        .custom-button-item-text {
+            font-size: 0.9rem;
+            color: #78909C;
+        }
+
+        .delete-btn {
+            background: #FFCDD2;
+            color: #C62828;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #EF9A9A;
+        }
+
+        .delete-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 25px;
+            }
+
+            .settings-icon {
+                font-size: 1.5rem;
+                right: 10px;
+                top: -5px;
+            }
+
+            .categories {
+                gap: 12px;
+                margin-bottom: 30px;
+            }
+
+            .category-btn {
+                padding: 14px 24px;
+                font-size: 1.1rem;
+                min-width: 140px;
+            }
+
+            .buttons-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .comm-button {
+                min-height: 140px;
+                min-width: 140px;
+                padding: 25px 15px;
+            }
+
+            .icon {
+                font-size: 3.5rem;
+            }
+
+            .label {
+                font-size: 1.1rem;
+            }
+
+            .message-bar {
+                padding: 20px;
+                min-height: 80px;
+            }
+
+            .message-text {
+                font-size: 1.3rem;
+            }
+
+            .clear-btn {
+                padding: 14px 22px;
+                font-size: 1rem;
+            }
+
+            .modal {
+                padding: 25px;
+            }
+
+            .modal h2 {
+                font-size: 1.6rem;
+            }
+
+            .modal h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            💬 My Communication Helper
+            <span class="settings-icon" onclick="openSettings()">⚙️</span>
+        </h1>
+
+        <div class="categories" id="categories"></div>
+        <div class="buttons-grid" id="buttonsGrid"></div>
+        
+        <div class="message-bar">
+            <div class="message-text" id="messageText">Tap a button to speak!</div>
+            <button class="clear-btn" onclick="clearMessage()">Clear</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal" onclick="closeModalOnOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2>⚙️ Settings</h2>
+            
+            <h3>🔊 Speech Settings</h3>
+            
+            <div class="setting-group">
+                <label class="setting-label">
+                    Speech Rate
+                    <span class="range-value" id="rateValue">0.9</span>
+                </label>
+                <input type="range" class="setting-control" id="speechRate" 
+                       min="0.5" max="1.5" step="0.1" value="0.9" 
+                       oninput="updateSpeechRate(this.value)">
+                <small style="color: #78909C;">Slower ← → Faster</small>
+            </div>
+
+            <div class="setting-group">
+                <label class="setting-label">
+                    Volume
+                    <span class="range-value" id="volumeValue">100%</span>
+                </label>
+                <input type="range" class="setting-control" id="volume" 
+                       min="0" max="100" step="5" value="100" 
+                       oninput="updateVolume(this.value)">
+                <small style="color: #78909C;">Quiet ← → Loud</small>
+            </div>
+
+            <h3>➕ Custom Buttons</h3>
+            
+            <div class="add-button-form">
+                <div class="setting-group">
+                    <label class="setting-label">Category</label>
+                    <select class="setting-control" id="customCategory">
+                        <option value="needs">Needs</option>
+                        <option value="feelings">Feelings</option>
+                        <option value="activities">Activities</option>
+                        <option value="social">Social</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Button Label</label>
+                    <input type="text" class="setting-control" id="customLabel" 
+                           placeholder="e.g., Music" maxlength="20">
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Text to Speak</label>
+                    <input type="text" class="setting-control" id="customText" 
+                           placeholder="e.g., I want to listen to music">
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Photo (Optional)</label>
+                    <div class="file-input-wrapper">
+                        <label for="customPhoto" class="file-input-label" id="photoLabel">
+                            📷 Choose a Photo
+                        </label>
+                        <input type="file" id="customPhoto" accept="image/*" 
+                               onchange="previewImage(this)">
+                    </div>
+                    <img id="imagePreview" class="image-preview" alt="Preview">
+                </div>
+
+                <button class="btn-primary" onclick="addCustomButton()">
+                    ➕ Add Button
+                </button>
+            </div>
+
+            <div class="custom-buttons-list" id="customButtonsList"></div>
+
+            <button class="btn-secondary" onclick="closeSettings()">
+                Close Settings
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const communicationButtons = {
+            needs: [
+                { icon: '🍎', label: 'Hungry', text: 'I am hungry' },
+                { icon: '💧', label: 'Thirsty', text: 'I am thirsty' },
+                { icon: '🚽', label: 'Bathroom', text: 'I need the bathroom' },
+                { icon: '😴', label: 'Tired', text: 'I am tired' }
+            ],
+            feelings: [
+                { icon: '😊', label: 'Happy', text: 'I am happy' },
+                { icon: '😢', label: 'Sad', text: 'I am sad' },
+                { icon: '😠', label: 'Angry', text: 'I am angry' },
+                { icon: '😰', label: 'Scared', text: 'I am scared' }
+            ],
+            activities: [
+                { icon: '🎮', label: 'Play', text: 'I want to play' },
+                { icon: '📺', label: 'Watch TV', text: 'I want to watch TV' },
+                { icon: '📖', label: 'Read', text: 'I want to read a book' },
+                { icon: '🎨', label: 'Draw', text: 'I want to draw' }
+            ],
+            social: [
+                { icon: '👋', label: 'Hello', text: 'Hello' },
+                { icon: '❤️', label: 'Love You', text: 'I love you' },
+                { icon: '🙏', label: 'Please', text: 'Please' },
+                { icon: '🙌', label: 'Thank You', text: 'Thank you' }
+            ]
+        };
+
+        let currentCategory = 'needs';
+        let messageQueue = [];
+        let speechRate = 0.9;
+        let speechVolume = 1.0;
+        let customButtons = {
+            needs: [],
+            feelings: [],
+            activities: [],
+            social: []
+        };
+
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedRate = localStorage.getItem('speechRate');
+            const savedVolume = localStorage.getItem('speechVolume');
+            const savedCustomButtons = localStorage.getItem('customButtons');
+
+            if (savedRate) {
+                speechRate = parseFloat(savedRate);
+                document.getElementById('speechRate').value = speechRate;
+                document.getElementById('rateValue').textContent = speechRate;
+            }
+
+            if (savedVolume) {
+                speechVolume = parseFloat(savedVolume);
+                document.getElementById('volume').value = savedVolume * 100;
+                document.getElementById('volumeValue').textContent = Math.round(savedVolume * 100) + '%';
+            }
+
+            if (savedCustomButtons) {
+                customButtons = JSON.parse(savedCustomButtons);
+            }
+        }
+
+        function updateSpeechRate(value) {
+            speechRate = parseFloat(value);
+            document.getElementById('rateValue').textContent = value;
+            localStorage.setItem('speechRate', speechRate);
+        }
+
+        function updateVolume(value) {
+            speechVolume = value / 100;
+            document.getElementById('volumeValue').textContent = value + '%';
+            localStorage.setItem('speechVolume', speechVolume);
+        }
+
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+            renderCustomButtonsList();
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeSettings();
+            }
+        }
+
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const label = document.getElementById('photoLabel');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.add('show');
+                    label.textContent = '✓ Photo Selected';
+                };
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function addCustomButton() {
+            const category = document.getElementById('customCategory').value;
+            const label = document.getElementById('customLabel').value.trim();
+            const text = document.getElementById('customText').value.trim();
+            const photoInput = document.getElementById('customPhoto');
+            
+            if (!label || !text) {
+                alert('Please enter both a label and text to speak!');
+                return;
+            }
+
+            const button = {
+                label: label,
+                text: text,
+                icon: '📝', // Default icon
+                isCustom: true
+            };
+
+            // Handle photo if provided
+            if (photoInput.files && photoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    button.photo = e.target.result;
+                    customButtons[category].push(button);
+                    saveCustomButtons();
+                    resetCustomForm();
+                    renderCustomButtonsList();
+                    if (currentCategory === category) {
+                        renderButtons();
+                    }
+                };
+                reader.readAsDataURL(photoInput.files[0]);
+            } else {
+                customButtons[category].push(button);
+                saveCustomButtons();
+                resetCustomForm();
+                renderCustomButtonsList();
+                if (currentCategory === category) {
+                    renderButtons();
+                }
+            }
+        }
+
+        function deleteCustomButton(category, index) {
+            if (confirm('Are you sure you want to delete this button?')) {
+                customButtons[category].splice(index, 1);
+                saveCustomButtons();
+                renderCustomButtonsList();
+                if (currentCategory === category) {
+                    renderButtons();
+                }
+            }
+        }
+
+        function saveCustomButtons() {
+            localStorage.setItem('customButtons', JSON.stringify(customButtons));
+        }
+
+        function resetCustomForm() {
+            document.getElementById('customLabel').value = '';
+            document.getElementById('customText').value = '';
+            document.getElementById('customPhoto').value = '';
+            document.getElementById('imagePreview').classList.remove('show');
+            document.getElementById('photoLabel').textContent = '📷 Choose a Photo';
+        }
+
+        function renderCustomButtonsList() {
+            const container = document.getElementById('customButtonsList');
+            container.innerHTML = '';
+
+            let hasCustomButtons = false;
+
+            Object.keys(customButtons).forEach(category => {
+                if (customButtons[category].length > 0) {
+                    hasCustomButtons = true;
+                    customButtons[category].forEach((button, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'custom-button-item';
+                        
+                        const iconOrPhoto = button.photo 
+                            ? `<img src="${button.photo}" alt="${button.label}">`
+                            : `<div style="font-size: 2rem;">${button.icon}</div>`;
+                        
+                        item.innerHTML = `
+                            ${iconOrPhoto}
+                            <div class="custom-button-item-info">
+                                <div class="custom-button-item-label">${button.label}</div>
+                                <div class="custom-button-item-text">${button.text}</div>
+                                <small style="color: #9E9E9E;">${category.charAt(0).toUpperCase() + category.slice(1)}</small>
+                            </div>
+                            <button class="delete-btn" onclick="deleteCustomButton('${category}', ${index})">
+                                Delete
+                            </button>
+                        `;
+                        container.appendChild(item);
+                    });
+                }
+            });
+
+            if (!hasCustomButtons) {
+                container.innerHTML = '<p style="text-align: center; color: #9E9E9E; padding: 20px;">No custom buttons yet. Add one above!</p>';
+            }
+        }
+
+        function initCategories() {
+            const container = document.getElementById('categories');
+            const categories = [
+                { id: 'needs', label: 'Needs', class: 'cat-needs' },
+                { id: 'feelings', label: 'Feelings', class: 'cat-feelings' },
+                { id: 'activities', label: 'Activities', class: 'cat-activities' },
+                { id: 'social', label: 'Social', class: 'cat-social' }
+            ];
+
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `category-btn ${cat.class} ${cat.id === currentCategory ? 'active' : ''}`;
+                btn.textContent = cat.label;
+                btn.onclick = () => switchCategory(cat.id);
+                btn.id = `cat-${cat.id}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function switchCategory(category) {
+            currentCategory = category;
+            
+            // Update active category button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`cat-${category}`).classList.add('active');
+            
+            renderButtons();
+        }
+
+        function renderButtons() {
+            const grid = document.getElementById('buttonsGrid');
+            grid.innerHTML = '';
+            
+            // Combine default and custom buttons
+            const allButtons = [
+                ...communicationButtons[currentCategory],
+                ...customButtons[currentCategory]
+            ];
+            
+            allButtons.forEach((button, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'comm-button';
+                
+                // Use photo if available, otherwise use icon
+                const visual = button.photo 
+                    ? `<img src="${button.photo}" class="icon" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;" alt="${button.label}">`
+                    : `<div class="icon">${button.icon}</div>`;
+                
+                btn.innerHTML = `
+                    ${visual}
+                    <div class="label">${button.label}</div>
+                `;
+                btn.onclick = () => speak(button.text, btn);
+                grid.appendChild(btn);
+            });
+        }
+
+        function speak(text, buttonElement) {
+            // Visual feedback
+            buttonElement.classList.add('speaking');
+            setTimeout(() => {
+                buttonElement.classList.remove('speaking');
+            }, 500);
+
+            // Update message display
+            messageQueue.push(text);
+            updateMessageDisplay();
+
+            // Text-to-speech with custom settings
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Cancel any ongoing speech
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = speechRate;
+                utterance.pitch = 1.1;
+                utterance.volume = speechVolume;
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function updateMessageDisplay() {
+            const messageText = document.getElementById('messageText');
+            if (messageQueue.length > 0) {
+                messageText.textContent = messageQueue.join(' ');
+            } else {
+                messageText.textContent = 'Tap a button to speak!';
+            }
+        }
+
+        function clearMessage() {
+            messageQueue = [];
+            updateMessageDisplay();
+            window.speechSynthesis.cancel();
+        }
+
+        // Initialize the app
+        loadSettings();
+        initCategories();
+        renderButtons();
+    </script>
+</body>
+</html>
