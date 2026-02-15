@@ -610,8 +610,44 @@
                 <small style="color: #78909C;">Quiet ← → Loud</small>
             </div>
 
+            <h3>🖼️ Customize Button Images</h3>
+
+            <div class="setting-group">
+                <label class="setting-label">Select Button to Customize</label>
+                <select class="setting-control" id="buttonToCustomize" onchange="showButtonImageCustomizer()">
+                    <option value="">-- Choose a button --</option>
+                </select>
+            </div>
+
+            <div id="imageCustomizerSection" style="display: none;">
+                <div class="setting-group">
+                    <label class="setting-label">Current Appearance</label>
+                    <div id="currentButtonPreview" style="text-align: center; padding: 20px; background: white; border-radius: 12px; margin-bottom: 15px;">
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Choose New Image</label>
+                    <div class="file-input-wrapper">
+                        <label for="customizeButtonImage" class="file-input-label" id="customizeImageLabel">
+                            📷 Choose Image from Resources
+                        </label>
+                        <input type="file" id="customizeButtonImage" accept="image/*"
+                               onchange="previewButtonCustomization(this)">
+                    </div>
+                    <img id="customizeImagePreview" class="image-preview" alt="Preview">
+                </div>
+
+                <button class="btn-primary" onclick="applyButtonCustomization()">
+                    ✓ Apply Image
+                </button>
+                <button class="btn-secondary" onclick="resetButtonImage()">
+                    🔄 Reset to Default
+                </button>
+            </div>
+
             <h3>➕ Custom Buttons</h3>
-            
+
             <div class="add-button-form">
                 <div class="setting-group">
                     <label class="setting-label">Category</label>
@@ -698,12 +734,14 @@
             activities: [],
             social: []
         };
+        let buttonImageCustomizations = {};
 
         // Load settings from localStorage
         function loadSettings() {
             const savedRate = localStorage.getItem('speechRate');
             const savedVolume = localStorage.getItem('speechVolume');
             const savedCustomButtons = localStorage.getItem('customButtons');
+            const savedImageCustomizations = localStorage.getItem('buttonImageCustomizations');
 
             if (savedRate) {
                 speechRate = parseFloat(savedRate);
@@ -719,6 +757,10 @@
 
             if (savedCustomButtons) {
                 customButtons = JSON.parse(savedCustomButtons);
+            }
+
+            if (savedImageCustomizations) {
+                buttonImageCustomizations = JSON.parse(savedImageCustomizations);
             }
         }
 
@@ -736,6 +778,7 @@
 
         function openSettings() {
             document.getElementById('settingsModal').classList.add('active');
+            populateButtonCustomizationDropdown();
             renderCustomButtonsList();
         }
 
@@ -904,22 +947,38 @@
         function renderButtons() {
             const grid = document.getElementById('buttonsGrid');
             grid.innerHTML = '';
-            
-            // Combine default and custom buttons
-            const allButtons = [
-                ...communicationButtons[currentCategory],
-                ...customButtons[currentCategory]
-            ];
-            
-            allButtons.forEach((button, index) => {
+
+            // Render default buttons with potential customizations
+            communicationButtons[currentCategory].forEach((button, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'comm-button';
-                
+
+                const buttonKey = `${currentCategory}:${index}`;
+                const customImage = buttonImageCustomizations[buttonKey];
+
+                // Use custom image if available, otherwise use default icon
+                const visual = customImage
+                    ? `<img src="${customImage}" class="icon" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;" alt="${button.label}">`
+                    : `<div class="icon">${button.icon}</div>`;
+
+                btn.innerHTML = `
+                    ${visual}
+                    <div class="label">${button.label}</div>
+                `;
+                btn.onclick = () => speak(button.text, btn);
+                grid.appendChild(btn);
+            });
+
+            // Render custom buttons
+            customButtons[currentCategory].forEach((button) => {
+                const btn = document.createElement('button');
+                btn.className = 'comm-button';
+
                 // Use photo if available, otherwise use icon
-                const visual = button.photo 
+                const visual = button.photo
                     ? `<img src="${button.photo}" class="icon" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;" alt="${button.label}">`
                     : `<div class="icon">${button.icon}</div>`;
-                
+
                 btn.innerHTML = `
                     ${visual}
                     <div class="label">${button.label}</div>
@@ -966,6 +1025,143 @@
             messageQueue = [];
             updateMessageDisplay();
             window.speechSynthesis.cancel();
+        }
+
+        // Button Image Customization Functions
+        function populateButtonCustomizationDropdown() {
+            const dropdown = document.getElementById('buttonToCustomize');
+            dropdown.innerHTML = '<option value="">-- Choose a button --</option>';
+
+            Object.keys(communicationButtons).forEach(category => {
+                communicationButtons[category].forEach((button, index) => {
+                    const option = document.createElement('option');
+                    option.value = `${category}:${index}`;
+                    option.textContent = `${button.label} (${category.charAt(0).toUpperCase() + category.slice(1)})`;
+                    dropdown.appendChild(option);
+                });
+            });
+        }
+
+        function showButtonImageCustomizer() {
+            const dropdown = document.getElementById('buttonToCustomize');
+            const section = document.getElementById('imageCustomizerSection');
+            const preview = document.getElementById('currentButtonPreview');
+
+            if (!dropdown.value) {
+                section.style.display = 'none';
+                return;
+            }
+
+            const [category, indexStr] = dropdown.value.split(':');
+            const index = parseInt(indexStr);
+            const button = communicationButtons[category][index];
+            const buttonKey = `${category}:${index}`;
+
+            // Show current button appearance
+            const customImage = buttonImageCustomizations[buttonKey];
+            if (customImage) {
+                preview.innerHTML = `
+                    <img src="${customImage}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px;" alt="${button.label}">
+                    <div style="margin-top: 10px; font-weight: 600; color: #37474F;">${button.label}</div>
+                    <div style="font-size: 0.9rem; color: #78909C;">Custom Image</div>
+                `;
+            } else {
+                preview.innerHTML = `
+                    <div style="font-size: 4rem;">${button.icon}</div>
+                    <div style="margin-top: 10px; font-weight: 600; color: #37474F;">${button.label}</div>
+                    <div style="font-size: 0.9rem; color: #78909C;">Default Emoji</div>
+                `;
+            }
+
+            section.style.display = 'block';
+
+            // Reset preview
+            document.getElementById('customizeImagePreview').classList.remove('show');
+            document.getElementById('customizeImageLabel').textContent = '📷 Choose Image from Resources';
+        }
+
+        function previewButtonCustomization(input) {
+            const preview = document.getElementById('customizeImagePreview');
+            const label = document.getElementById('customizeImageLabel');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.add('show');
+                    label.textContent = '✓ Image Selected';
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function applyButtonCustomization() {
+            const dropdown = document.getElementById('buttonToCustomize');
+            const imageInput = document.getElementById('customizeButtonImage');
+
+            if (!dropdown.value) {
+                alert('Please select a button to customize!');
+                return;
+            }
+
+            if (!imageInput.files || !imageInput.files[0]) {
+                alert('Please select an image!');
+                return;
+            }
+
+            const buttonKey = dropdown.value;
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                buttonImageCustomizations[buttonKey] = e.target.result;
+                localStorage.setItem('buttonImageCustomizations', JSON.stringify(buttonImageCustomizations));
+
+                // Refresh the preview
+                showButtonImageCustomizer();
+
+                // Refresh buttons if currently viewing this category
+                const [category] = buttonKey.split(':');
+                if (currentCategory === category) {
+                    renderButtons();
+                }
+
+                // Reset file input
+                imageInput.value = '';
+                document.getElementById('customizeImagePreview').classList.remove('show');
+                document.getElementById('customizeImageLabel').textContent = '📷 Choose Image from Resources';
+
+                alert('Image applied successfully!');
+            };
+
+            reader.readAsDataURL(imageInput.files[0]);
+        }
+
+        function resetButtonImage() {
+            const dropdown = document.getElementById('buttonToCustomize');
+
+            if (!dropdown.value) {
+                alert('Please select a button to reset!');
+                return;
+            }
+
+            if (confirm('Reset this button to its default emoji icon?')) {
+                const buttonKey = dropdown.value;
+                delete buttonImageCustomizations[buttonKey];
+                localStorage.setItem('buttonImageCustomizations', JSON.stringify(buttonImageCustomizations));
+
+                // Refresh the preview
+                showButtonImageCustomizer();
+
+                // Refresh buttons if currently viewing this category
+                const [category] = buttonKey.split(':');
+                if (currentCategory === category) {
+                    renderButtons();
+                }
+
+                alert('Button reset to default!');
+            }
         }
 
         // Initialize the app
